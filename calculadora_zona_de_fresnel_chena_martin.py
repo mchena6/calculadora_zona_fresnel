@@ -29,8 +29,9 @@ def truncar_decimales(number: float) -> str:
     return f"{entero}.{decimal[:2]}"
 
 
-def calcular_zona_fresnel(d1: float, d2: float, d_total: float, frecuencia: float) -> float:
-    return 17.31 * math.sqrt((d1 * d2) / (frecuencia * d_total))
+def calcular_zona_fresnel(d_total: float, frecuencia: float) -> float:
+    # Fórmula de la imagen: F1 = 8.656 * sqrt(D / f)
+    return 8.656 * math.sqrt(d_total / frecuencia)
 
 
 class Calculadora(QWidget):
@@ -68,13 +69,11 @@ class Calculadora(QWidget):
         layout.addWidget(line)
 
         # Inputs de datos (distancia y frecuencia)
-        self.input_d1 = self.crear_inputs("Distancia 1 a Obstáculo (d1) [km]:")
-        self.input_d2 = self.crear_inputs("Distancia 2 a Obstáculo (d2) [km]:")
+        self.input_d = self.crear_inputs("Distancia Total del Enlace (D) [km]:")
         self.input_f = self.crear_inputs("Frecuencia de Operación (f) [GHz]:")
 
         # Agregar inputs al layout principal
-        layout.addLayout(self.input_d1['layout'])
-        layout.addLayout(self.input_d2['layout'])
+        layout.addLayout(self.input_d['layout'])
         layout.addLayout(self.input_f['layout'])
 
         # Boton de Calcular
@@ -111,7 +110,7 @@ class Calculadora(QWidget):
         result_layout.setContentsMargins(15, 15, 15, 15)
 
         # Mostrar distancia total
-        self.lbl_distance = QLabel("Distancia Total (d1 + d2): -- km")
+        self.lbl_distance = QLabel("Distancia Total: -- km")
         self.lbl_distance.setStyleSheet("color: #333; font-size: 13px;")
 
         # Mostrar resultado (r1)
@@ -161,28 +160,23 @@ class Calculadora(QWidget):
     def calcular(self):
         try:
             # Obtener valores de los campos
-            d1_str = self.input_d1['edit'].text()
-            d2_str = self.input_d2['edit'].text()
+            d_str = self.input_d['edit'].text()
             f_str = self.input_f['edit'].text()
 
             # Validar que los campos no esten vacios
-            if not d1_str or not d2_str or not f_str:
+            if not d_str or not f_str:
                 raise ValueError("Todos los campos son obligatorios.")
 
             # Conversion de valores
-            d1 = convertir_float(d1_str)
-            d2 = convertir_float(d2_str)
+            d_total = convertir_float(d_str)
             frecuencia = convertir_float(f_str)
 
-            # Distancia total
-            d_total = d1 + d2
-
             # Calculo de zona de fresnel
-            r_metros = calcular_zona_fresnel(d1, d2, d_total, frecuencia)
+            r_metros = calcular_zona_fresnel(d_total, frecuencia)
             r_truncado = truncar_decimales(r_metros)
 
             # Actualizar la interfaz con los resultados
-            self.lbl_distance.setText(f"Distancia Total (d1 + d2): {d_total:.2f} km")
+            self.lbl_distance.setText(f"Distancia Total: {d_total:.2f} km")
             self.lbl_result.setText(f"Radio Zona de Fresnel (r): {r_truncado} m")
 
         except ValueError as err:
